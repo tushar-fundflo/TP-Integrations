@@ -108,16 +108,15 @@ pipeline{
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId:params.AWS_ENV, region:params.AWS_REGION]]) {
                         
                         def accountNumber = sh(returnStdout: true, script: 'aws sts get-caller-identity --query "Account" --output text').trim()
-                            sh "zip -cvf tp-version-${BUILD_NUMBER}.zip *"
-                            sh "aws s3 cp tp-version-${BUILD_NUMBER}.zip s3://elasticbeanstalk-${params.AWS_REGION}-${accountNumber} --region ${params.AWS_REGION}"
+                            sh "jar -cvf tp-version-${BUILD_NUMBER}.war *"
+                            sh "aws s3 cp tp-version-${BUILD_NUMBER}.war s3://elasticbeanstalk-${params.AWS_REGION}-${accountNumber} --region ${params.AWS_REGION}"
                         
                         sh """aws elasticbeanstalk create-application-version --application-name "${params.EB_APP_NAME}" \
                         --version-label "version-${BUILD_NUMBER}" \
                         --description "Build created from JENKINS. Job:${JOB_NAME}, BuildId:${BUILD_DISPLAY_NAME}" \
-                        --source-bundle S3Bucket=elasticbeanstalk-${params.AWS_REGION}-${accountNumber},S3Key=tp-version-${BUILD_NUMBER}.zip \
+                        --source-bundle S3Bucket=elasticbeanstalk-${params.AWS_REGION}-${accountNumber},S3Key=tp-version-${BUILD_NUMBER}.war \
                         --region ${params.AWS_REGION}"""
                         sh "aws elasticbeanstalk update-environment --environment-name \"${params.EB_ENV_NAME}\" --version-label \"version-${BUILD_NUMBER}\" --region ${params.AWS_REGION}"
-                        // 
                     } 
                 }
             }
